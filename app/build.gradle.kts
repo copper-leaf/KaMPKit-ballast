@@ -51,6 +51,5 @@ dependencies {
     implementation(libs.multiplatformSettings.common)
     implementation(libs.kotlinx.dateTime)
     coreLibraryDesugaring(libs.android.desugaring)
-    implementation(libs.koin.android)
     testImplementation(libs.junit)
 }

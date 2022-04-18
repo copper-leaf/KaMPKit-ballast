@@ -64,6 +64,9 @@ kotlin {
                 implementation(libs.multiplatformSettings.common)
                 implementation(libs.kotlinx.dateTime)
                 api(libs.touchlab.kermit)
+                api(libs.ballast.core)
+                api(libs.ballast.repository)
+                implementation(libs.ballast.savedstate)
             }
         }
         val commonTest by getting {
@@ -76,6 +79,8 @@ kotlin {
                 implementation(libs.androidx.lifecycle.viewmodel)
                 implementation(libs.sqlDelight.android)
                 implementation(libs.ktor.client.okHttp)
+                api(libs.koin.android)
+                implementation(libs.ballast.debugger)
             }
         }
         val androidTest by getting {
@@ -114,6 +119,8 @@ kotlin {
         homepage = "https://github.com/touchlab/KaMPKit"
         framework {
             isStatic = false // SwiftUI preview requires dynamic framework
+            export(libs.ballast.core)
+            export(libs.ballast.repository)
         }
         ios.deploymentTarget = "12.4"
         podfile = project.file("../ios/Podfile")

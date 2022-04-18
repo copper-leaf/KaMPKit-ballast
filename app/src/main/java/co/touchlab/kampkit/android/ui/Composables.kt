@@ -1,6 +1,5 @@
 package co.touchlab.kampkit.android.ui
 
-import android.annotation.SuppressLint
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.TweenSpec
@@ -20,80 +19,55 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.flowWithLifecycle
 import co.touchlab.kampkit.android.R
 import co.touchlab.kampkit.db.Breed
-import co.touchlab.kampkit.models.BreedViewModel
-import co.touchlab.kampkit.models.BreedViewState
-import co.touchlab.kermit.Logger
+import co.touchlab.kampkit.vm.BreedContract
+import co.touchlab.kampkit.vm.BreedViewModel
+import com.copperleaf.ballast.repository.cache.Cached
+import com.copperleaf.ballast.repository.cache.getCachedOrEmptyList
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 
 @Composable
 fun MainScreen(
     viewModel: BreedViewModel,
-    log: Logger
 ) {
-    val lifecycleOwner = LocalLifecycleOwner.current
-    val lifecycleAwareDogsFlow = remember(viewModel.breedState, lifecycleOwner) {
-        viewModel.breedState.flowWithLifecycle(lifecycleOwner.lifecycle)
-    }
+    val vmState by viewModel.observeStates().collectAsState()
 
-    @SuppressLint("StateFlowValueCalledInComposition") // False positive lint check when used inside collectAsState()
-    val dogsState by lifecycleAwareDogsFlow.collectAsState(viewModel.breedState.value)
-
-    MainScreenContent(
-        dogsState = dogsState,
-        onRefresh = { viewModel.refreshBreeds() },
-        onSuccess = { data -> log.v { "View updating with ${data.size} breeds" } },
-        onError = { exception -> log.e { "Displaying error: $exception" } },
-        onFavorite = { viewModel.updateBreedFavorite(it) }
-    )
+    MainScreenContent(vmState) { viewModel.trySend(it) }
 }
 
 @Composable
 fun MainScreenContent(
-    dogsState: BreedViewState,
-    onRefresh: () -> Unit = {},
-    onSuccess: (List<Breed>) -> Unit = {},
-    onError: (String) -> Unit = {},
-    onFavorite: (Breed) -> Unit = {}
+    vmState: BreedContract.State,
+    postInput: (BreedContract.Inputs) -> Unit,
 ) {
     Surface(
         color = MaterialTheme.colors.background,
         modifier = Modifier.fillMaxSize()
     ) {
         SwipeRefresh(
-            state = rememberSwipeRefreshState(isRefreshing = dogsState.isLoading),
-            onRefresh = onRefresh
+            state = rememberSwipeRefreshState(isRefreshing = vmState.isLoading),
+            onRefresh = { postInput(BreedContract.Inputs.RefreshBreeds(true)) }
         ) {
-            if (dogsState.isEmpty) {
-                Empty()
-            }
-            val breeds = dogsState.breeds
-            if (breeds != null) {
-                LaunchedEffect(breeds) {
-                    onSuccess(breeds)
-                }
-                Success(successData = breeds, favoriteBreed = onFavorite)
-            }
-            val error = dogsState.error
+            val error = vmState.error
             if (error != null) {
-                LaunchedEffect(error) {
-                    onError(error)
-                }
                 Error(error)
+            } else {
+                val breeds = vmState.breeds.getCachedOrEmptyList()
+                if (breeds.isNotEmpty()) {
+                    Success(successData = breeds, postInput = postInput)
+                } else {
+                    Empty()
+                }
             }
         }
     }
@@ -128,9 +102,9 @@ fun Error(error: String) {
 @Composable
 fun Success(
     successData: List<Breed>,
-    favoriteBreed: (Breed) -> Unit
+    postInput: (BreedContract.Inputs) -> Unit,
 ) {
-    DogList(breeds = successData, favoriteBreed)
+    DogList(breeds = successData) { postInput(BreedContract.Inputs.UpdateBreedFavorite(it)) }
 }
 
 @Composable
@@ -184,11 +158,13 @@ fun FavoriteIcon(breed: Breed) {
 @Composable
 fun MainScreenContentPreview_Success() {
     MainScreenContent(
-        dogsState = BreedViewState(
-            breeds = listOf(
-                Breed(0, "appenzeller", false),
-                Breed(1, "australian", true)
+        vmState = BreedContract.State(
+            breeds = Cached.Value(
+                listOf(
+                    Breed(0, "appenzeller", false),
+                    Breed(1, "australian", true)
+                )
             )
         )
-    )
+    ) { }
 }

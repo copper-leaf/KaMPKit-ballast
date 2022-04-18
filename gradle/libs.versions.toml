@@ -14,6 +14,7 @@ kotlin = "1.6.10"
 ktor = "2.0.0-beta-1"
 lifecycle = "2.4.1"
 sqlDelight = "1.5.3"
+ballast = "1.0.0"
 
 [libraries]
 
@@ -72,6 +73,11 @@ touchlab-stately = { module = "co.touchlab:stately-common", version = "1.2.1" }
 
 turbine = { module = "app.cash.turbine:turbine", version = "0.7.0" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+
+ballast-core = { module = "io.github.copper-leaf:ballast-core", version.ref = "ballast" }
+ballast-repository = { module = "io.github.copper-leaf:ballast-repository", version.ref = "ballast" }
+ballast-savedstate = { module = "io.github.copper-leaf:ballast-saved-state", version.ref = "ballast" }
+ballast-debugger = { module = "io.github.copper-leaf:ballast-debugger", version.ref = "ballast" }
 
 [plugins]
 gradleDependencyUpdate = "com.github.ben-manes.versions:0.42.0"

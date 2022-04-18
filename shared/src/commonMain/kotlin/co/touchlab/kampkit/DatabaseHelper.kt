@@ -42,14 +42,13 @@ class DatabaseHelper(
             .flowOn(backgroundDispatcher)
 
     suspend fun deleteAll() {
-        log.i { "Database Cleared" }
+        log.d { "Database Cleared" }
         dbRef.transactionWithContext(backgroundDispatcher) {
             dbRef.tableQueries.deleteAll()
         }
     }
 
     suspend fun updateFavorite(breedId: Long, favorite: Boolean) {
-        log.i { "Breed $breedId: Favorited $favorite" }
         dbRef.transactionWithContext(backgroundDispatcher) {
             dbRef.tableQueries.updateFavorite(favorite, breedId)
         }
