@@ -2,15 +2,22 @@ package co.touchlab.kampkit
 
 import co.touchlab.kampkit.ktor.DogApi
 import co.touchlab.kampkit.ktor.DogApiImpl
-import co.touchlab.kampkit.models.BreedRepository
+import co.touchlab.kampkit.repository.BreedRepository
+import co.touchlab.kampkit.repository.BreedRepositoryImpl
 import co.touchlab.kermit.Logger
 import co.touchlab.kermit.StaticConfig
 import co.touchlab.kermit.platformLogWriter
+import com.copperleaf.ballast.BallastLogger
+import com.copperleaf.ballast.BallastViewModelConfiguration
+import com.copperleaf.ballast.core.LoggingInterceptor
+import com.copperleaf.ballast.plusAssign
+import com.copperleaf.ballast.repository.bus.EventBus
+import com.copperleaf.ballast.repository.bus.EventBusImpl
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.datetime.Clock
 import org.koin.core.KoinApplication
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
 import org.koin.core.parameter.parametersOf
@@ -65,13 +72,26 @@ private val coreModule = module {
     val baseLogger = Logger(config = StaticConfig(logWriterList = listOf(platformLogWriter())), "KampKit")
     factory { (tag: String?) -> if (tag != null) baseLogger.withTag(tag) else baseLogger }
 
-    single {
-        BreedRepository(
+    factory<BallastViewModelConfiguration.Builder> {
+        BallastViewModelConfiguration.Builder()
+            .apply {
+                logger = { tag -> KermitBallastLogger(getWith(tag)) }
+                this += LoggingInterceptor()
+            }
+    }
+    factory<CoroutineScope> {
+        CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    }
+    single<EventBus> {
+        EventBusImpl()
+    }
+    single<BreedRepository> {
+        BreedRepositoryImpl(
             get(),
             get(),
             get(),
-            getWith("BreedRepository"),
-            get()
+            get(),
+            get(),
         )
     }
 }
@@ -80,7 +100,10 @@ internal inline fun <reified T> Scope.getWith(vararg params: Any?): T {
     return get(parameters = { parametersOf(*params) })
 }
 
-// Simple function to clean up the syntax a bit
-fun KoinComponent.injectLogger(tag: String): Lazy<Logger> = inject { parametersOf(tag) }
-
 expect val platformModule: Module
+
+class KermitBallastLogger(val log: Logger) : BallastLogger {
+    override fun debug(message: String) { log.d(message) }
+    override fun info(message: String) { log.i(message) }
+    override fun error(throwable: Throwable) { log.e(throwable) { "" } }
+}

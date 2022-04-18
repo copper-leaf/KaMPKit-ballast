@@ -1,4 +1,5 @@
 import Combine
+import SwiftUI
 import shared
 
 /// Create a Combine publisher from the supplied `FlowAdapter`. Use this in contexts where more transformation will be
@@ -36,5 +37,67 @@ class KotlinError: LocalizedError {
     }
     var errorDescription: String? {
         throwable.message
+    }
+}
+
+class BallastObservable<Inputs: AnyObject, Events: AnyObject, State: AnyObject>: ObservableObject {
+    private var cancellables = [AnyCancellable]()
+    @Published public private(set) var vmState: State
+
+    private var viewModelFactory: ()->IosViewModel<Inputs, Events, State>
+    private var eventHandlerFactory: (()->EventHandler)?
+
+    private var viewModel: IosViewModel<Inputs, Events, State>?
+
+    init(
+        viewModelFactory: @escaping ()->IosViewModel<Inputs, Events, State>,
+        eventHandlerFactory: (()->EventHandler)? = nil
+    ) {
+        self.viewModelFactory = viewModelFactory
+        self.eventHandlerFactory = eventHandlerFactory
+        self.vmState = self.viewModelFactory().initialState
+    }
+
+    func activate() {
+        let viewModel = self.viewModelFactory()
+        self.vmState = viewModel.initialState
+
+        doPublish(viewModel.stateCallbacks) { [weak self] vmState in
+            self?.vmState = vmState
+        }.store(in: &cancellables)
+
+        if let eventHandler = self.eventHandlerFactory?() {
+            let eventHandlerCanceller = viewModel.attachEventHandler(handler: eventHandler)
+            cancellables.append(AnyCancellable { eventHandlerCanceller.cancel() })
+        }
+
+        self.viewModel = viewModel
+    }
+
+    func deactivate() {
+        cancellables.forEach { $0.cancel() }
+        cancellables.removeAll()
+
+        viewModel?.close()
+        viewModel = nil
+    }
+
+    func postInput(_ input: Inputs) {
+        self.viewModel?.trySend(element: input)
+    }
+}
+
+extension View {
+    func withViewModel<Inputs: AnyObject, Events: AnyObject, State: AnyObject>(
+        _ observableModel: BallastObservable<Inputs, Events, State>,
+        _ onInitialize: @escaping ()->Void = { }
+    ) -> some View {
+        return self.onAppear(perform: {
+                observableModel.activate()
+                onInitialize()
+            })
+            .onDisappear(perform: {
+                observableModel.deactivate()
+            })
     }
 }
