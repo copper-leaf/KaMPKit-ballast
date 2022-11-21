@@ -4,6 +4,7 @@ import co.touchlab.kampkit.db.KaMPKitDb
 import co.touchlab.kampkit.vm.BreedViewModel
 import com.russhwolf.settings.AndroidSettings
 import com.russhwolf.settings.Settings
+import com.russhwolf.settings.SharedPreferencesSettings
 import com.squareup.sqldelight.android.AndroidSqliteDriver
 import com.squareup.sqldelight.db.SqlDriver
 import io.ktor.client.engine.okhttp.OkHttp
@@ -21,7 +22,7 @@ actual val platformModule: Module = module {
     }
 
     single<Settings> {
-        AndroidSettings(get())
+        SharedPreferencesSettings(get())
     }
 
     single {

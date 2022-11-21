@@ -3,7 +3,7 @@ package co.touchlab.kampkit
 import co.touchlab.kampkit.db.KaMPKitDb
 import co.touchlab.kampkit.vm.BreedViewModel
 import co.touchlab.kermit.Logger
-import com.russhwolf.settings.AppleSettings
+import com.russhwolf.settings.NSUserDefaultsSettings
 import com.russhwolf.settings.Settings
 import com.squareup.sqldelight.db.SqlDriver
 import com.squareup.sqldelight.drivers.native.NativeSqliteDriver
@@ -21,7 +21,7 @@ fun initKoinIos(
     doOnStartup: () -> Unit
 ): KoinApplication = initKoin(
     module {
-        single<Settings> { AppleSettings(userDefaults) }
+        single<Settings> { NSUserDefaultsSettings(userDefaults) }
         single { appInfo }
         single { doOnStartup }
     }

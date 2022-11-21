@@ -1,7 +1,9 @@
+
+
 plugins {
     kotlin("multiplatform")
     kotlin("native.cocoapods")
-    id("kotlinx-serialization")
+    kotlin("plugin.serialization")
     id("com.android.library")
     id("com.squareup.sqldelight")
 }
@@ -20,23 +22,12 @@ android {
     }
 
     lint {
-        isWarningsAsErrors = true
-        isAbortOnError = true
+        warningsAsErrors = true
+        abortOnError = true
     }
 }
 
 version = "1.2"
-
-android {
-    configurations {
-        create("androidTestApi")
-        create("androidTestDebugApi")
-        create("androidTestReleaseApi")
-        create("testApi")
-        create("testDebugApi")
-        create("testReleaseApi")
-    }
-}
 
 kotlin {
     android()
@@ -51,9 +42,7 @@ kotlin {
                 optIn("kotlinx.coroutines.ExperimentalCoroutinesApi")
             }
         }
-    }
 
-    sourceSets {
         val commonMain by getting {
             dependencies {
                 implementation(libs.koin.core)
@@ -92,12 +81,6 @@ kotlin {
             dependencies {
                 implementation(libs.sqlDelight.native)
                 implementation(libs.ktor.client.ios)
-                val coroutineCore = libs.coroutines.core.get()
-                implementation("${coroutineCore.module.group}:${coroutineCore.module.name}:${coroutineCore.versionConstraint.displayName}") {
-                    version {
-                        strictly(libs.versions.coroutines.get())
-                    }
-                }
             }
         }
         val iosTest by getting

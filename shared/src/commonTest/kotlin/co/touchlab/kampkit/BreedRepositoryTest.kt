@@ -7,9 +7,8 @@ import co.touchlab.kampkit.mock.DogApiMock
 import co.touchlab.kampkit.models.BreedRepository
 import co.touchlab.kermit.Logger
 import co.touchlab.kermit.StaticConfig
-import com.russhwolf.settings.MockSettings
+import com.russhwolf.settings.MapSettings
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.Clock
 import kotlin.test.AfterTest
@@ -18,7 +17,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.time.Duration.Companion.hours
 
-@RunWith(AndroidJUnit4::class)
 class BreedRepositoryTest {
 
     private var kermit = Logger(StaticConfig())
@@ -28,7 +26,7 @@ class BreedRepositoryTest {
         kermit,
         Dispatchers.Default
     )
-    private val settings = MockSettings()
+    private val settings = MapSettings()
     private val ktorApi = DogApiMock()
 
     // Need to start at non-zero time because the default value for db timestamp is 0
@@ -51,7 +49,7 @@ class BreedRepositoryTest {
     }
 
     @Test
-    fun `Get breeds without cache`() = runBlocking {
+    fun `Get breeds without cache`() = runTest {
         ktorApi.prepareResult(ktorApi.successResult())
         repository.refreshBreedsIfStale()
         repository.getBreeds().test {
@@ -60,7 +58,7 @@ class BreedRepositoryTest {
     }
 
     @Test
-    fun `Get updated breeds with cache and preserve favorites`() = runBlocking {
+    fun `Get updated breeds with cache and preserve favorites`() = runTest {
         val successResult = ktorApi.successResult()
         val resultWithExtraBreed = successResult.copy(message = successResult.message + ("extra" to emptyList()))
         ktorApi.prepareResult(resultWithExtraBreed)
@@ -79,7 +77,7 @@ class BreedRepositoryTest {
     }
 
     @Test
-    fun `Get updated breeds when stale and preserve favorites`() = runBlocking {
+    fun `Get updated breeds when stale and preserve favorites`() = runTest {
         settings.putLong(BreedRepository.DB_TIMESTAMP_KEY, (clock.currentInstant - 2.hours).toEpochMilliseconds())
 
         val successResult = ktorApi.successResult()
@@ -97,7 +95,7 @@ class BreedRepositoryTest {
     }
 
     @Test
-    fun `Toggle favorite cached breed`() = runBlocking {
+    fun `Toggle favorite cached breed`() = runTest {
         dbHelper.insertBreeds(breedNames)
         dbHelper.updateFavorite(australianLike.id, true)
 
