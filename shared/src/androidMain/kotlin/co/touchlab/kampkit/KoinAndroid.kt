@@ -2,7 +2,7 @@ package co.touchlab.kampkit
 
 import co.touchlab.kampkit.db.KaMPKitDb
 import co.touchlab.kampkit.vm.BreedViewModel
-import com.russhwolf.settings.AndroidSettings
+import com.copperleaf.ballast.debugger.BallastDebuggerClientConnection
 import com.russhwolf.settings.Settings
 import com.russhwolf.settings.SharedPreferencesSettings
 import com.squareup.sqldelight.android.AndroidSqliteDriver
@@ -25,9 +25,14 @@ actual val platformModule: Module = module {
         SharedPreferencesSettings(get())
     }
 
-    single {
-        OkHttp.create()
+    single<BallastDebuggerClientConnection<*>> {
+        BallastDebuggerClientConnection(
+            OkHttp,
+            get(),
+            host = "10.0.2.2",
+        ).also { it.connect(KermitBallastLogger(getWith("Debugger"))) }
     }
+    single { OkHttp.create() }
 
     viewModel { BreedViewModel(get(), get()) }
 }

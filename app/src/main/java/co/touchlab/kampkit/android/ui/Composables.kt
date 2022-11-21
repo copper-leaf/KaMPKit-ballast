@@ -38,7 +38,7 @@ import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 
 @Composable
 fun MainScreen(
-    viewModel: BreedViewModel,
+    viewModel: BreedViewModel
 ) {
     val vmState by viewModel.observeStates().collectAsState()
 
@@ -48,7 +48,7 @@ fun MainScreen(
 @Composable
 fun MainScreenContent(
     vmState: BreedContract.State,
-    postInput: (BreedContract.Inputs) -> Unit,
+    postInput: (BreedContract.Inputs) -> Unit
 ) {
     Surface(
         color = MaterialTheme.colors.background,
@@ -102,7 +102,7 @@ fun Error(error: String) {
 @Composable
 fun Success(
     successData: List<Breed>,
-    postInput: (BreedContract.Inputs) -> Unit,
+    postInput: (BreedContract.Inputs) -> Unit
 ) {
     DogList(breeds = successData) { postInput(BreedContract.Inputs.UpdateBreedFavorite(it)) }
 }

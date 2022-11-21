@@ -55,6 +55,7 @@ kotlin {
                 api(libs.touchlab.kermit)
                 api(libs.ballast.core)
                 api(libs.ballast.repository)
+                implementation(libs.ballast.debugger)
                 implementation(libs.ballast.savedstate)
             }
         }

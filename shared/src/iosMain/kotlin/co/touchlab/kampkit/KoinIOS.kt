@@ -3,6 +3,7 @@ package co.touchlab.kampkit
 import co.touchlab.kampkit.db.KaMPKitDb
 import co.touchlab.kampkit.vm.BreedViewModel
 import co.touchlab.kermit.Logger
+import com.copperleaf.ballast.debugger.BallastDebuggerClientConnection
 import com.russhwolf.settings.NSUserDefaultsSettings
 import com.russhwolf.settings.Settings
 import com.squareup.sqldelight.db.SqlDriver
@@ -30,6 +31,13 @@ fun initKoinIos(
 actual val platformModule = module {
     single<SqlDriver> { NativeSqliteDriver(KaMPKitDb.Schema, "KampkitDb") }
 
+    single<BallastDebuggerClientConnection<*>> {
+        BallastDebuggerClientConnection(
+            Darwin,
+            get(),
+            host = "127.0.0.1",
+        ).also { it.connect() }
+    }
     single { Darwin.create() }
 
     single { BreedViewModel(get(), get()) }

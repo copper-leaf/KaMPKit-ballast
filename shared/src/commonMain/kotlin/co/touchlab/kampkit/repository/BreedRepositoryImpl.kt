@@ -4,9 +4,13 @@ import co.touchlab.kampkit.DatabaseHelper
 import co.touchlab.kampkit.db.Breed
 import co.touchlab.kampkit.ktor.DogApi
 import com.copperleaf.ballast.BallastViewModelConfiguration
+import com.copperleaf.ballast.build
+import com.copperleaf.ballast.core.BootstrapInterceptor
+import com.copperleaf.ballast.plusAssign
 import com.copperleaf.ballast.repository.BallastRepository
 import com.copperleaf.ballast.repository.bus.EventBus
 import com.copperleaf.ballast.repository.cache.Cached
+import com.copperleaf.ballast.repository.withRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -22,7 +26,7 @@ class BreedRepositoryImpl(
     BreedRepositoryContract.State>(
     coroutineScope = coroutineScope,
     eventBus = eventBus,
-    configBuilder = configBuilder
+    config = configBuilder
         .apply {
             initialState = BreedRepositoryContract.State()
             inputHandler = BreedRepositoryInputHandler(
@@ -31,10 +35,15 @@ class BreedRepositoryImpl(
                 eventBus = eventBus,
             )
             name = "Breed Repository"
+
+            this += BootstrapInterceptor {
+                BreedRepositoryContract.Inputs.Initialize
+            }
         }
+        .withRepository()
+        .build()
 ), BreedRepository {
     override fun getBreeds(forceRefresh: Boolean): Flow<Cached<List<Breed>>> {
-        trySend(BreedRepositoryContract.Inputs.Initialize)
         trySend(BreedRepositoryContract.Inputs.RefreshBreeds(forceRefresh))
         return observeStates()
             .map { it.breeds }

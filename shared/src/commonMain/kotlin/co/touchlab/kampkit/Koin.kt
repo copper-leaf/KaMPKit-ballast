@@ -10,6 +10,7 @@ import co.touchlab.kermit.platformLogWriter
 import com.copperleaf.ballast.BallastLogger
 import com.copperleaf.ballast.BallastViewModelConfiguration
 import com.copperleaf.ballast.core.LoggingInterceptor
+import com.copperleaf.ballast.debugger.BallastDebuggerInterceptor
 import com.copperleaf.ballast.plusAssign
 import com.copperleaf.ballast.repository.bus.EventBus
 import com.copperleaf.ballast.repository.bus.EventBusImpl
@@ -69,7 +70,8 @@ private val coreModule = module {
     // uses you *may* want to have a more robust configuration from the native platform. In KaMP Kit,
     // that would likely go into platformModule expect/actual.
     // See https://github.com/touchlab/Kermit
-    val baseLogger = Logger(config = StaticConfig(logWriterList = listOf(platformLogWriter())), "KampKit")
+    val baseLogger =
+        Logger(config = StaticConfig(logWriterList = listOf(platformLogWriter())), "KampKit")
     factory { (tag: String?) -> if (tag != null) baseLogger.withTag(tag) else baseLogger }
 
     factory<BallastViewModelConfiguration.Builder> {
@@ -77,6 +79,7 @@ private val coreModule = module {
             .apply {
                 logger = { tag -> KermitBallastLogger(getWith(tag)) }
                 this += LoggingInterceptor()
+                this += BallastDebuggerInterceptor(get())
             }
     }
     factory<CoroutineScope> {
@@ -103,7 +106,15 @@ internal inline fun <reified T> Scope.getWith(vararg params: Any?): T {
 expect val platformModule: Module
 
 class KermitBallastLogger(val log: Logger) : BallastLogger {
-    override fun debug(message: String) { log.d(message) }
-    override fun info(message: String) { log.i(message) }
-    override fun error(throwable: Throwable) { log.e(throwable) { "" } }
+    override fun debug(message: String) {
+        log.d(message)
+    }
+
+    override fun info(message: String) {
+        log.i(message)
+    }
+
+    override fun error(throwable: Throwable) {
+        log.e(throwable) { "" }
+    }
 }

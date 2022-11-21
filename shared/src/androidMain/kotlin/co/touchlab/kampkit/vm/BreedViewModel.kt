@@ -2,8 +2,9 @@ package co.touchlab.kampkit.vm
 
 import co.touchlab.kampkit.repository.BreedRepository
 import com.copperleaf.ballast.BallastViewModelConfiguration
+import com.copperleaf.ballast.build
 import com.copperleaf.ballast.core.AndroidViewModel
-import com.copperleaf.ballast.forViewModel
+import com.copperleaf.ballast.withViewModel
 
 class BreedViewModel(
     breedRepository: BreedRepository,
@@ -14,9 +15,10 @@ class BreedViewModel(
     BreedContract.State
     >(
     config = configBuilder
-        .forViewModel(
+        .withViewModel(
             initialState = BreedContract.State(),
             inputHandler = BreedInputHandler(breedRepository),
             name = "Breeds",
         )
+        .build()
 )
